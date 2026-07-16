@@ -1,0 +1,12 @@
+services:
+  wa-gateway:
+    build: .
+    container_name: wa-gateway
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./auth_session:/app/auth_session
+      - ./data:/app/data

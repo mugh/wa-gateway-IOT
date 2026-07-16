@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WA Gateway - Dashboard</title>
+<style>
+  :root {
+    --bg: #0b141a;
+    --card: #111b21;
+    --surface: #202c33;
+    --border: #2a3942;
+    --accent: #00a884;
+    --accent-dim: rgba(0,168,132,0.15);
+    --text: #e9edef;
+    --muted: #8696a0;
+    --danger: #f15c6d;
+    --danger-dim: rgba(241,92,109,0.15);
+    --warn: #d9a23a;
+    --warn-dim: rgba(217,162,58,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+  }
+
+  /* ---- Layout ---- */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 52px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
+
+  nav { display: flex; gap: 4px; }
+  .tab-btn {
+    background: none; border: none; color: var(--muted);
+    padding: 6px 16px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 500; transition: all .15s;
+  }
+  .tab-btn:hover { background: var(--surface); color: var(--text); }
+  .tab-btn.active { background: var(--accent-dim); color: var(--accent); }
+
+  .header-right { margin-left: auto; }
+  .btn-sm {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    transition: all .15s;
+  }
+  .btn-sm:hover { border-color: var(--danger); color: var(--danger); }
+
+  main { flex: 1; padding: 24px; max-width: 720px; margin: 0 auto; width: 100%; }
+
+  /* ---- Tab Panels ---- */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ---- Status Panel ---- */
+  .status-card {
+    background: var(--card); border-radius: 12px; padding: 32px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .status-badge {
+    display: inline-block; padding: 5px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; margin-bottom: 20px;
+  }
+  .status-connected { background: var(--accent-dim); color: var(--accent); }
+  .status-qr        { background: var(--warn-dim);   color: var(--warn); }
+  .status-connecting { background: var(--warn-dim);  color: var(--warn); }
+  .status-disconnected { background: var(--danger-dim); color: var(--danger); }
+
+  #qr-box { background: #fff; padding: 14px; border-radius: 8px; display: inline-block; margin-bottom: 16px; }
+  #qr-box img { display: block; width: 220px; height: 220px; }
+
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+  .connected-info { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+  .btn { padding: 9px 20px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; margin: 4px; transition: filter .15s; }
+  .btn:hover { filter: brightness(1.12); }
+  .btn-primary { background: var(--accent); color: #062f25; }
+  .btn-danger  { background: var(--danger); color: #2a0a0d; }
+
+  /* ---- Endpoints Panel ---- */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-header h2 { font-size: 15px; font-weight: 600; }
+
+  /* Add form */
+  .add-form {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 20px;
+  }
+  .add-form h3 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .05em; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+  .form-group input, .form-group textarea {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; color: var(--text); font-size: 13px;
+    padding: 9px 11px; font-family: inherit; resize: vertical;
+    transition: border-color .15s;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: var(--muted); }
+  .path-prefix { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .form-actions { margin-top: 16px; display: flex; gap: 8px; align-items: center; }
+  .btn-add { background: var(--accent); color: #062f25; padding: 9px 20px; border: none; border-radius: 7px; font-weight: 600; font-size: 13px; cursor: pointer; }
+  .btn-add:hover { filter: brightness(1.1); }
+  .form-error { color: var(--danger); font-size: 12px; display: none; }
+
+  /* Endpoint list */
+  .ep-list { display: flex; flex-direction: column; gap: 10px; }
+  .ep-empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 13px; }
+
+  .ep-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 12px; align-items: start;
+  }
+  .ep-label { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .ep-url {
+    font-family: 'SF Mono', 'Consolas', monospace; font-size: 11px;
+    color: var(--accent); background: var(--accent-dim);
+    padding: 4px 8px; border-radius: 5px; display: inline-block;
+    margin-bottom: 8px; word-break: break-all; cursor: pointer;
+    user-select: all;
+  }
+  .ep-url:hover { filter: brightness(1.1); }
+  .ep-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+  .ep-meta span { font-size: 11px; color: var(--muted); }
+  .ep-meta .ep-number { color: var(--text); }
+
+  .ep-actions { display: flex; gap: 6px; align-items: flex-start; padding-top: 2px; }
+  .btn-copy {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); padding: 5px 10px; border-radius: 6px;
+    font-size: 11px; cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+  }
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-del {
+    background: none; border: 1px solid transparent;
+    color: var(--muted); padding: 5px 10px; border-radius: 6px;
+    font-size: 11px; cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+  }
+  .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+
+  .hit-badge {
+    display: inline-block; background: var(--surface);
+    border-radius: 10px; padding: 1px 7px; font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ---- Groups Panel ---- */
+  .search-bar {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .search-bar input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px;
+    padding: 9px 12px; font-family: inherit;
+  }
+  .search-bar input:focus { outline: none; border-color: var(--accent); }
+  .btn-refresh {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); padding: 9px 14px; border-radius: 8px;
+    font-size: 12px; cursor: pointer; white-space: nowrap;
+    transition: all .15s;
+  }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+  .group-list { display: flex; flex-direction: column; gap: 8px; }
+  .group-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 10px; align-items: center;
+  }
+  .group-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .group-id {
+    font-family: "SF Mono", Consolas, monospace; font-size: 11px;
+    color: var(--accent); word-break: break-all;
+  }
+  .group-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .group-actions { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+  .loading-text { text-align: center; color: var(--muted); padding: 32px; font-size: 13px; }
+  .group-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events: none;
+    transition: opacity .2s; z-index: 100;
+  }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>WA Gateway</h1>
+    <nav>
+      <button class="tab-btn active" onclick="switchTab('status')">Status WA</button>
+      <button class="tab-btn" onclick="switchTab('endpoints')">Custom Endpoints</button>
+      <button class="tab-btn" onclick="switchTab('groups')">Daftar Grup</button>
+    </nav>
+    <div class="header-right">
+      <button class="btn-sm" onclick="confirmLogoutWeb()">Keluar</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== TAB: STATUS ===== -->
+    <div id="panel-status" class="panel active">
+      <div class="status-card">
+        <div id="wa-content">Memuat...</div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: ENDPOINTS ===== -->
+    <div id="panel-endpoints" class="panel">
+      <!-- Form tambah -->
+      <div class="add-form">
+        <h3>Tambah Endpoint Baru</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Path Trigger</label>
+            <input id="f-path" type="text" placeholder="contoh: notif-alarm" maxlength="64">
+            <span class="path-prefix" id="path-preview">/trigger/…?key=…</span>
+          </div>
+          <div class="form-group">
+            <label>Key (min 8 karakter)</label>
+            <input id="f-key" type="text" placeholder="kunci rahasia">
+          </div>
+          <div class="form-group">
+            <label>Nomor Tujuan</label>
+            <input id="f-number" type="text" placeholder="08123456789">
+          </div>
+          <div class="form-group">
+            <label>Label (opsional)</label>
+            <input id="f-label" type="text" placeholder="Deskripsi singkat">
+          </div>
+          <div class="form-group full">
+            <label>Pesan</label>
+            <textarea id="f-message" rows="3" placeholder="Isi pesan yang akan dikirim saat endpoint di-hit"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-add" onclick="addEndpoint()">Tambah</button>
+          <span class="form-error" id="form-error"></span>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="section-header">
+        <h2>Endpoint Aktif</h2>
+      </div>
+      <div class="ep-list" id="ep-list">
+        <div class="ep-empty">Memuat...</div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: GRUP ===== -->
+    <div id="panel-groups" class="panel">
+      <div class="search-bar">
+        <input id="group-search" type="text" placeholder="Cari nama grup..." oninput="filterGroups()">
+        <button class="btn-refresh" onclick="loadGroups(true)">↻ Refresh</button>
+      </div>
+      <div id="group-count" class="group-count"></div>
+      <div class="group-list" id="group-list">
+        <div class="loading-text">Klik tab ini untuk memuat daftar grup.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ---- Tab switching ----
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['status','endpoints','groups'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'endpoints') loadEndpoints();
+  if (tab === 'groups') loadGroups();
+}
+
+// ---- Toast ----
+let toastTimer;
+function toast(msg, dur = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ---- Web logout ----
+function confirmLogoutWeb() {
+  if (confirm('Keluar dari dashboard?')) {
+    fetch('/logout', { method: 'POST' }).then(() => location.href = '/login');
+  }
+}
+
+// ================= TAB STATUS =================
+async function fetchStatus() {
+  try {
+    const res  = await fetch('/dashboard/status');
+    const data = await res.json();
+    renderStatus(data);
+  } catch { /* ignore */ }
+}
+
+function renderStatus(data) {
+  const el = document.getElementById('wa-content');
+  if (data.status === 'connected') {
+    el.innerHTML = `
+      <div class="status-badge status-connected">Terhubung</div>
+      <p class="connected-info">WhatsApp aktif dan siap menerima request.</p>
+      <button class="btn btn-danger"
+        onclick="if(confirm('Logout WhatsApp? Perlu scan QR ulang.')) fetch('/dashboard/logout',{method:'POST'}).then(()=>location.reload())">
+        Logout WhatsApp
+      </button>`;
+  } else if (data.status === 'qr' && data.qrImage) {
+    el.innerHTML = `
+      <div class="status-badge status-qr">Menunggu Scan QR</div>
+      <div id="qr-box"><img src="${data.qrImage}" alt="QR Code"></div>
+      <p class="hint">Buka WhatsApp → Perangkat Tertaut → Tautkan Perangkat → scan QR ini.<br>QR refresh otomatis setiap 3 detik.</p>`;
+  } else if (data.status === 'connecting') {
+    el.innerHTML = `
+      <div class="status-badge status-connecting">Menghubungkan…</div>
+      <p class="hint">Sedang menyiapkan koneksi, mohon tunggu.</p>`;
+  } else {
+    el.innerHTML = `
+      <div class="status-badge status-disconnected">Tidak Terhubung</div>
+      <p class="hint">Klik tombol di bawah untuk memulai koneksi dan menampilkan QR code.</p>
+      <button class="btn btn-primary"
+        onclick="fetch('/dashboard/start',{method:'POST'}).then(()=>location.reload())">
+        Mulai Koneksi
+      </button>`;
+  }
+}
+
+fetchStatus();
+setInterval(fetchStatus, 3000);
+
+// ================= TAB ENDPOINTS =================
+function buildUrl(triggerPath, key) {
+  return `${location.origin}/trigger/${triggerPath}?key=${key}`;
+}
+
+async function loadEndpoints() {
+  const res  = await fetch('/dashboard/endpoints');
+  const list = await res.json();
+  const el   = document.getElementById('ep-list');
+
+  if (!list.length) {
+    el.innerHTML = '<div class="ep-empty">Belum ada custom endpoint. Tambah di form atas.</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(ep => {
+    const url      = buildUrl(ep.path, ep.key);
+    const lastHit  = ep.lastHit ? new Date(ep.lastHit).toLocaleString('id-ID') : 'belum pernah';
+    return `
+    <div class="ep-card" id="ep-${ep.id}">
+      <div>
+        <div class="ep-label">${escHtml(ep.label || ep.path)}</div>
+        <div class="ep-url" title="Klik untuk copy" onclick="copyUrl('${escHtml(url)}')">${escHtml(url)}</div>
+        <div class="ep-meta">
+          <span>Tujuan: <span class="ep-number">${escHtml(ep.number)}</span></span>
+          <span>Hit: <span class="hit-badge">${ep.hitCount || 0}×</span></span>
+          <span>Terakhir: ${lastHit}</span>
+        </div>
+        <div class="ep-meta" style="margin-top:4px">
+          <span>Pesan: <em style="color:var(--text)">${escHtml(ep.message.length > 60 ? ep.message.slice(0,60)+'…' : ep.message)}</em></span>
+        </div>
+      </div>
+      <div class="ep-actions">
+        <button class="btn-copy" onclick="copyUrl('${escHtml(url)}')">Copy URL</button>
+        <button class="btn-del" onclick="deleteEndpoint('${ep.id}', '${escHtml(ep.label||ep.path)}')">Hapus</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function copyUrl(url) {
+  navigator.clipboard.writeText(url).then(() => toast('URL disalin ke clipboard ✓'));
+}
+
+// Preview URL saat ketik path
+document.addEventListener('DOMContentLoaded', () => {
+  const pathInput = document.getElementById('f-path');
+  if (pathInput) {
+    pathInput.addEventListener('input', () => {
+      const v = pathInput.value.trim();
+      document.getElementById('path-preview').textContent =
+        v ? `${location.origin}/trigger/${v}?key=…` : '/trigger/…?key=…';
+    });
+  }
+});
+
+async function addEndpoint() {
+  const errEl = document.getElementById('form-error');
+  errEl.style.display = 'none';
+
+  const body = {
+    triggerPath: document.getElementById('f-path').value.trim(),
+    key:         document.getElementById('f-key').value.trim(),
+    number:      document.getElementById('f-number').value.trim(),
+    message:     document.getElementById('f-message').value.trim(),
+    label:       document.getElementById('f-label').value.trim(),
+  };
+
+  const res  = await fetch('/dashboard/endpoints', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+
+  if (!data.ok) {
+    errEl.textContent = data.error;
+    errEl.style.display = 'inline';
+    return;
+  }
+
+  // Reset form
+  ['f-path','f-key','f-number','f-message','f-label'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('path-preview').textContent = '/trigger/…?key=…';
+  toast('Endpoint berhasil ditambahkan ✓');
+  loadEndpoints();
+}
+
+async function deleteEndpoint(id, label) {
+  if (!confirm(`Hapus endpoint "${label}"?`)) return;
+  const res = await fetch(`/dashboard/endpoints/${id}`, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.ok) {
+    toast('Endpoint dihapus.');
+    loadEndpoints();
+  } else {
+    toast('Gagal hapus: ' + data.error);
+  }
+}
+
+// ================= TAB GRUP =================
+let allGroups = [];
+let groupsLoaded = false;
+
+async function loadGroups(forceRefresh = false) {
+  if (groupsLoaded && !forceRefresh) return;
+  const listEl = document.getElementById('group-list');
+  const countEl = document.getElementById('group-count');
+  listEl.innerHTML = '<div class="loading-text">Memuat daftar grup...</div>';
+  countEl.textContent = '';
+
+  try {
+    const res  = await fetch('/dashboard/groups');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    allGroups = data.groups;
+    groupsLoaded = true;
+    renderGroups(allGroups);
+  } catch (err) {
+    listEl.innerHTML = `<div class="loading-text" style="color:var(--danger)">${escHtml(err.message)}</div>`;
+  }
+}
+
+function filterGroups() {
+  const q = document.getElementById('group-search').value.toLowerCase();
+  const filtered = allGroups.filter(g =>
+    g.name.toLowerCase().includes(q) || g.id.includes(q)
+  );
+  renderGroups(filtered);
+}
+
+function renderGroups(list) {
+  const listEl  = document.getElementById('group-list');
+  const countEl = document.getElementById('group-count');
+  countEl.textContent = `${list.length} grup ditemukan`;
+
+  if (!list.length) {
+    listEl.innerHTML = '<div class="loading-text">Tidak ada grup yang cocok.</div>';
+    return;
+  }
+
+  listEl.innerHTML = list.map(g => `
+    <div class="group-card">
+      <div>
+        <div class="group-name">${escHtml(g.name)}</div>
+        <div class="group-id">${escHtml(g.id)}</div>
+        <div class="group-meta">${g.participantCount} anggota${g.description ? ' · ' + escHtml(g.description.slice(0, 60)) + (g.description.length > 60 ? '…' : '') : ''}</div>
+      </div>
+      <div class="group-actions">
+        <button class="btn-copy" onclick="copyGroupId('${escHtml(g.id)}')">Copy ID</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyGroupId(id) {
+  navigator.clipboard.writeText(id).then(() => toast('Group ID disalin ✓'));
+}
+</script>
+</body>
+</html>

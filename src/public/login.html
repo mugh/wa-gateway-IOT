@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WA Gateway - Login</title>
+<style>
+  :root {
+    --bg: #0b141a;
+    --card: #111b21;
+    --accent: #00a884;
+    --text: #e9edef;
+    --muted: #8696a0;
+    --error: #f15c6d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .card {
+    background: var(--card);
+    padding: 40px 32px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    text-align: center;
+  }
+  p.subtitle {
+    color: var(--muted);
+    text-align: center;
+    margin: 0 0 28px;
+    font-size: 13px;
+  }
+  input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #2a3942;
+    background: #202c33;
+    color: var(--text);
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #062f25;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button:hover { background: #06cf9c; }
+  .error {
+    color: var(--error);
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 16px;
+    min-height: 18px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>WA Gateway</h1>
+    <p class="subtitle">Masuk untuk mengelola koneksi WhatsApp</p>
+    <div class="error">{{ERROR}}</div>
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="Password" autofocus required>
+      <button type="submit">Masuk</button>
+    </form>
+  </div>
+</body>
+</html>
