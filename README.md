@@ -24,7 +24,7 @@ Built on Baileys (an unofficial WhatsApp library), packaged in Docker, with a we
 ### 1. Preparation
 
 ```bash
-git clone https://github.com/<username>/wa-gateway.git
+git clone https://github.com/mugh/wa-gateway-IOT.git
 cd wa-gateway
 cp .env.example .env
 ```
