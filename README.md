@@ -1,27 +1,27 @@
-# WA Gateway
+#WA Gateway
 
-Personal WhatsApp gateway ringan untuk satu nomor HP — cocok untuk notifikasi IoT (smart plug, sensor, alarm) atau aplikasi apapun yang butuh kirim pesan WhatsApp secara otomatis.
+A lightweight personal WhatsApp gateway for one phone number — perfect for IoT notifications (smart plugs, sensors, alarms) or any application that needs to send WhatsApp messages automatically.
 
-Dibangun di atas [Baileys](https://github.com/WhiskeySockets/Baileys) (library WA unofficial), dikemas dalam Docker, dengan dashboard web dan REST API.
-
----
-
-## Fitur
-
-- **Scan QR lewat browser** — tidak perlu akses terminal
-- **REST API kirim pesan** — ke nomor personal maupun grup
-- **Custom Trigger Endpoint** — URL GET sederhana yang langsung kirim pesan saat di-hit, cocok untuk IoT / webhook / automation
-- **Manajemen endpoint via API** — buat dan hapus trigger endpoint tanpa buka dashboard
-- **Daftar grup** — lihat semua grup beserta Group ID-nya langsung dari dashboard
-- **Session persist** — tidak perlu scan QR ulang setelah container restart
-- **Login dashboard dilindungi password** — diset di `.env`
-- **Rate limiting** — anti abuse dan brute-force
+Built on Baileys (an unofficial WhatsApp library), packaged in Docker, with a web dashboard and REST API.
 
 ---
 
-## Cara Pakai
+## Features
 
-### 1. Persiapan
+- **Scan QR via browser** — no terminal access required
+- **REST API send messages** — to personal numbers or groups
+- **Custom Trigger Endpoint** — a simple GET URL that sends messages immediately when hit, suitable for IoT / webhooks / automation
+- **Endpoint management via API** — create and delete trigger endpoints without opening the dashboard
+- **Group list** — view all groups and their Group IDs directly from the dashboard
+- **Session persistence** — no need to re-scan QR after container restart
+- **Password-protected dashboard login** — set in `.env`
+- **Rate limiting** — anti-abuse and brute-force
+
+---
+
+## How to Use
+
+### 1. Preparation
 
 ```bash
 git clone https://github.com/<username>/wa-gateway.git
@@ -32,90 +32,90 @@ cp .env.example .env
 Edit `.env`:
 
 ```env
-LOGIN_PASSWORD=password_kuat_kamu
-API_KEY=string_acak_panjang
-SESSION_SECRET=string_acak_lain
+LOGIN_PASSWORD=your_strong_password
+API_KEY=long_random_string
+SESSION_SECRET=other_random_string
 PORT=3000
 DEVICE_NAME=WA Gateway
 ```
 
-> Generate string acak: `openssl rand -hex 32`
+> Generate random string: `openssl rand -hex 32`
 
-### 2. Jalankan
-
-```bash
-docker compose up -d --build
-```
-
-### 3. Hubungkan WhatsApp
-
-Buka `http://<ip-server>:3000` → login → klik **Mulai Koneksi** → scan QR dari HP (WhatsApp → Perangkat Tertaut → Tautkan Perangkat).
-
-### 4. Update Image (tanpa kehilangan sesi)
+### 2. Run
 
 ```bash
 docker compose up -d --build
 ```
 
-Folder `auth_session/` dan `data/` di-mount sebagai volume — sesi WA dan konfigurasi endpoint tetap aman.
+### 3. Connect to WhatsApp
+
+Open `http://<server-ip>:3000` → login → click **Start Connection** → scan QR code from your phone (WhatsApp → Linked Devices → Link Device).
+
+### 4. Update Image (without losing sessions)
+
+```bash
+docker compose up -d --build
+```
+
+The `auth_session/` and `data/` folders are mounted as volumes — WA sessions and endpoint configurations remain secure.
 
 ---
 
 ## Portainer
 
-Tambahkan stack baru, isi dengan isi `docker-compose.yml`, lalu set environment variable berikut di bagian **Environment**:
+Add a new stack, populate it with the contents of `docker-compose.yml`, then set the following environment variables in the **Environment** section:
 
-| Variable | Keterangan |
+| Variable | Description |
 |---|---|
-| `LOGIN_PASSWORD` | Password login dashboard |
-| `API_KEY` | API key untuk REST API |
-| `SESSION_SECRET` | Secret untuk signing cookie session |
-| `PORT` | Port server (default: 3000) |
-| `DEVICE_NAME` | Nama perangkat di WA (opsional) |
+| `LOGIN_PASSWORD` | Dashboard login password |
+| `API_KEY` | API key for REST API |
+| `SESSION_SECRET` | Secret for signing session cookies |
+| `PORT` | Server port (default: 3000) |
+| `DEVICE_NAME` | Device name in WhatsApp (optional) |
 
-Pastikan volumes `auth_session` dan `data` sudah dikonfigurasi agar sesi tidak hilang saat update image.
+Make sure the `auth_session` and `data` volumes are configured to prevent session loss during image updates.
 
 ---
 
 ## REST API
 
-Semua endpoint API wajib menyertakan header:
+All API endpoints must include the following header:
 ```
-x-api-key: <API_KEY dari .env>
+x-api-key: <API_KEY from .env>
 ```
 
-### Kirim Pesan
+### Send Message
 
 ```
 POST /api/send
 ```
 
 ```json
-{ "number": "08123456789", "message": "Halo dari WA Gateway" }
+{ "number": "08123456789", "message": "Hello from WhatsApp Gateway" }
 ```
 
-Format `number` yang diterima:
-- `08123456789` — nomor lokal
-- `628123456789` — format internasional
-- `628123456789@s.whatsapp.net` — JID personal
-- `1234567890-1234567890@g.us` — Group ID (lihat tab Grup di dashboard)
+Accepted `number` formats:
+- `08123456789` — local number
+- `628123456789` — international format
+- `628123456789@s.whatsapp.net` — personal JID
+- `1234567890-1234567890@g.us` — Group ID (see the Groups tab in dashboard)
 
 **Response:**
 ```json
 { "ok": true, "messageId": "ABCD1234..." }
 ```
 
-**Contoh curl:**
+**Curl example:**
 ```bash
-curl -X POST http://server:3000/api/send \
-  -H "x-api-key: API_KEY_KAMU" \
-  -H "Content-Type: application/json" \
-  -d '{"number":"08123456789","message":"Sensor suhu tinggi!"}'
+curl -X POST http://server:3000/api/send\ 
+-H "x-api-key:YOUR_API_KEY"\ 
+-H "Content-Type: application/json" \ 
+-d '{"number":"08123456789","message":"High temperature sensor!"}'
 ```
 
 ---
 
-### Cek Status Koneksi
+### Check Connection Status
 
 ```
 GET /api/status
@@ -131,24 +131,24 @@ GET /api/status
 
 ## Custom Trigger Endpoint
 
-Trigger endpoint adalah URL GET simpel yang bisa di-hit dari mana saja — browser, curl, ESP8266, Home Assistant, IFTTT, dsb — dan langsung mengirim pesan WA yang sudah dikonfigurasi.
+A trigger endpoint is a simple GET URL that can be accessed from anywhere — browser, curl, ESP8266, Home Assistant, IFTTT, etc. — and immediately sends a configured WhatsApp message.
 
-### Format URL
+### URL Format
 
 ```
 GET /trigger/<path>?key=<key>
 ```
 
-Key salah atau path tidak ada → `404` (tidak ada info yang bocor).
+Invalid key or path does not exist → `404` (no information leaked).
 
-**Contoh penggunaan dari ESP8266/Arduino:**
+**Example usage from ESP8266/Arduino:**
 ```cpp
 HTTPClient http;
 http.begin("http://192.168.1.100:3000/trigger/alarm-pintu?key=kuncirahasia99");
 http.GET();
 ```
 
-**Contoh dari curl:**
+**Example of curl:**
 ```bash
 curl "http://server:3000/trigger/notif-alarm?key=kuncirahasia99"
 # → {"ok":true}
@@ -156,59 +156,59 @@ curl "http://server:3000/trigger/notif-alarm?key=kuncirahasia99"
 
 ---
 
-### Manajemen Trigger Endpoint via API
+### Trigger Endpoint Management via API
 
-Selain lewat dashboard, trigger endpoint bisa dikelola via REST API menggunakan `x-api-key`.
+In addition to the dashboard, trigger endpoints can be managed via the REST API using the `x-api-key`.
 
-#### List semua endpoint
+#### List all endpoints
 
 ```
 GET /api/endpoints
 ```
 
 ```json
-{
-  "ok": true,
-  "endpoints": [
-    {
-      "id": "abc123",
-      "path": "notif-alarm",
-      "label": "Alarm Rumah",
-      "number": "08123456789",
-      "message": "Alarm berbunyi!",
-      "hitCount": 5,
-      "lastHit": "2025-01-15T10:30:00.000Z",
-      "createdAt": "2025-01-01T00:00:00.000Z"
-    }
-  ]
+{ 
+"ok": true, 
+"endpoints": [ 
+{ 
+"id": "abc123", 
+"path": "notif-alarm", 
+"label": "Home Alarm", 
+"number": "08123456789", 
+"message": "Alarm sounds!", 
+"hitCount": 5, 
+"lastHit": "2025-01-15T10:30:00.000Z", 
+"createdAt": "2025-01-01T00:00:00.000Z" 
+} 
+]
 }
 ```
 
-#### Tambah endpoint baru
+#### Add new endpoint
 
 ```
 POST /api/endpoints
 ```
 
 ```json
-{
-  "triggerPath": "notif-alarm",
-  "key": "kuncirahasia99",
-  "number": "08123456789",
-  "message": "Alarm berbunyi!",
-  "label": "Alarm Rumah"
+{ 
+"triggerPath": "notif-alarm",
+"key": "kuncirahasia99",
+"number": "08123456789",
+"message": "Alarm sounds!",
+"label": "Home Alarm"
 }
 ```
 
-Aturan `triggerPath`: hanya huruf, angka, dash, underscore — max 64 karakter.
-Key minimal 8 karakter.
+`triggerPath` rule: only letters, numbers, dashes, underscores — maximum 64 characters.
+Key must be at least 8 characters.
 
 **Response:**
 ```json
 { "ok": true, "entry": { "id": "abc123", "path": "notif-alarm", ... } }
 ```
 
-#### Hapus endpoint
+#### Delete endpoint
 
 ```
 DELETE /api/endpoints/<id>
@@ -220,7 +220,7 @@ DELETE /api/endpoints/<id>
 
 ---
 
-## Contoh Integrasi IoT
+## Example of IoT Integration
 
 ### ESP8266 / ESP32
 
@@ -228,87 +228,5 @@ DELETE /api/endpoints/<id>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 
-const char* WA_GATEWAY = "http://192.168.1.100:3000/trigger/alarm-pintu";
-const char* TRIGGER_KEY = "kuncirahasia99";
-
-void kirimNotifWA() {
-  HTTPClient http;
-  String url = String(WA_GATEWAY) + "?key=" + TRIGGER_KEY;
-  http.begin(url);
-  int code = http.GET();
-  http.end();
-}
-```
-
-### Home Assistant (REST command)
-
-```yaml
-rest_command:
-  notif_wa_alarm:
-    url: "http://192.168.1.100:3000/trigger/alarm-rumah?key=kuncirahasia99"
-    method: GET
-```
-
-### Node-RED
-
-Gunakan node **HTTP Request** dengan method GET ke URL trigger. Bisa dikombinasikan dengan node inject, mqtt, atau sensor input.
-
-### Python
-
-```python
-import requests
-
-def kirim_wa(pesan):
-    requests.post(
-        "http://server:3000/api/send",
-        json={"number": "08123456789", "message": pesan},
-        headers={"x-api-key": "API_KEY_KAMU"}
-    )
-
-kirim_wa("Suhu ruangan: 35°C — melebihi batas!")
-```
-
----
-
-## Keamanan
-
-- Dashboard login dilindungi password + rate limit (10 percobaan / 15 menit)
-- REST API dilindungi API key di header `x-api-key`
-- Trigger endpoint: key salah atau path tidak ada selalu return `404`
-- Rate limit trigger: 20 request / menit per IP
-- `trust proxy` diaktifkan untuk kompatibilitas Docker/reverse proxy
-
-> **Catatan:** Baileys adalah library *unofficial* — gunakan secara wajar. Jangan untuk spam atau bulk messaging agar nomor tidak terkena banned WhatsApp.
-
----
-
-## Struktur Proyek
-
-```
-wa-gateway/
-├── src/
-│   ├── server.js        # Express server, semua routing
-│   ├── whatsapp.js      # Koneksi Baileys, kirim pesan, daftar grup
-│   ├── endpoints.js     # CRUD custom trigger endpoints (simpan ke JSON)
-│   ├── middleware.js    # Auth: session login & API key
-│   └── public/
-│       ├── login.html   # Halaman login
-│       └── dashboard.html  # Dashboard (Status WA, Custom Endpoints, Grup)
-├── auth_session/        # Sesi WA Baileys (auto-dibuat, di-mount volume)
-├── data/
-│   └── endpoints.json   # Konfigurasi custom endpoints (di-mount volume)
-├── .env.example
-├── Dockerfile
-└── docker-compose.yml
-```
-
----
-
-## Volumes yang Harus Di-mount
-
-| Path di container | Isi | Keterangan |
-|---|---|---|
-| `/app/auth_session` | Kredensial sesi WA | Hilang = scan QR ulang |
-| `/app/data` | `endpoints.json` | Hilang = konfigurasi endpoint hilang |
-
-Sudah dikonfigurasi di `docker-compose.yml`. Untuk Portainer, pastikan kedua volume ini di-bind ke folder di host.
+const char* WA_GATEWAY = "http://192.168.1.100:3000/trigger/alarm-door";
+const char* TRIGGER_
