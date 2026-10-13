@@ -132,12 +132,9 @@ app.post('/dashboard/start', requireSession, async (req, res) => {
 });
 
 app.post('/dashboard/logout', requireSession, async (req, res) => {
+  // Logout + hapus isi folder session + siapkan QR baru
   await wa.logout();
-  // Hapus folder session biar bener-bener logout dan minta scan QR baru
-  const authDir = path.join(__dirname, '..', 'auth_session');
-  fs.rm(authDir, { recursive: true, force: true }, () => {
-    res.redirect('/dashboard');
-  });
+  res.redirect('/dashboard');
 });
 
 // ----------------- REST API (perlu x-api-key) -----------------
@@ -259,3 +256,11 @@ app.listen(PORT, () => {
   // Auto-start koneksi WA saat server nyala (kalau sudah ada session tersimpan)
   wa.start().catch((err) => console.error('[WA] Gagal start awal:', err));
 });
+
+// Shutdown rapi: tutup socket WA tanpa logout, session tetap tersimpan
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, async () => {
+    await wa.stop();
+    process.exit(0);
+  });
+}
